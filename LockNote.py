@@ -6,7 +6,9 @@ from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 
+
 extension = ".locked"
+password_is_required = False
 
 def encrypt_bytes(password, plaintext_bytes):
     salt = get_random_bytes(16)
@@ -83,7 +85,11 @@ class PasswordDialog(tk.Toplevel):
         pw1 = self.entry1.get()
         pw2 = self.entry2.get()
         if not pw1 or not pw2:
-            self.error_label.config(text="Both fields are required.")
+            if password_is_required:
+                self.error_label.config(text="Both fields are required.")
+            else:
+                self.password = "Pa22word1234"
+                self.destroy()
         elif pw1 != pw2:
             self.error_label.config(text="Passwords do not match.")
         else:
@@ -191,7 +197,10 @@ class LockNote:
             if is_locked:
                 password = simpledialog.askstring("Password", "Enter file password:", show="*")
                 if not password:
-                    return
+                    if password_is_required:
+                        return
+                    else:
+                        password = "Pa22word1234"
 
                 try:
                     with open(file_path, 'rb') as f:
@@ -255,8 +264,6 @@ class LockNote:
             password = dialog.password
             if not password:
                 return  # user cancelled or mismatch
-
-
             try:
                 content = self.text_area.get(1.0, tk.END).rstrip() + "\n"
                 plaintext_bytes = content.encode('utf-8')
