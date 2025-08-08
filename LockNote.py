@@ -25,6 +25,77 @@ def decrypt_bytes(password, encrypted_bytes):
     plaintext_bytes = unpad(cipher.decrypt(ciphertext), AES.block_size)
     return plaintext_bytes
 
+
+class PasswordDialog(tk.Toplevel):
+    def __init__(self, parent, title="Set Password"):
+        super().__init__(parent)
+        self.title(title)
+        self.configure(bg="#f0f0f0")
+        self.geometry("300x200")
+        self.resizable(False, False)
+
+        self.password = None
+        self._create_widgets()
+        self._center_window(parent)
+
+        self.grab_set()
+        self.entry1.focus()
+        self.wait_window()
+
+    def _create_widgets(self):
+        # Frame for spacing and layout
+        frame = tk.Frame(self, bg="#f0f0f0")
+        frame.pack(expand=True, fill="both", padx=20, pady=20)
+
+        tk.Label(frame, text="Enter Password:", bg="#f0f0f0", anchor="w").pack(fill="x")
+        self.entry1 = tk.Entry(frame, show="*", relief="flat", font=("Segoe UI", 10))
+        self.entry1.pack(fill="x", pady=(0, 10))
+
+        tk.Label(frame, text="Confirm Password:", bg="#f0f0f0", anchor="w").pack(fill="x")
+        self.entry2 = tk.Entry(frame, show="*", relief="flat", font=("Segoe UI", 10))
+        self.entry2.pack(fill="x", pady=(0, 10))
+
+        self.error_label = tk.Label(frame, text="", fg="red", bg="#f0f0f0", font=("Segoe UI", 9))
+        self.error_label.pack(pady=(0, 10))
+
+        btn_frame = tk.Frame(frame, bg="#f0f0f0")
+        btn_frame.pack(pady=(5, 0))
+
+        ok_btn = tk.Button(btn_frame, text="OK", width=10, command=self.validate, relief="flat", bg="#4CAF50", fg="white")
+        cancel_btn = tk.Button(btn_frame, text="Cancel", width=10, command=self.cancel, relief="flat", bg="#f44336", fg="white")
+
+        ok_btn.pack(side="left", padx=5)
+        cancel_btn.pack(side="right", padx=5)
+
+    def _center_window(self, parent):
+        self.update_idletasks()
+        parent_x = parent.winfo_rootx()
+        parent_y = parent.winfo_rooty()
+        parent_width = parent.winfo_width()
+        parent_height = parent.winfo_height()
+        win_width = self.winfo_width()
+        win_height = self.winfo_height()
+        x = parent_x + (parent_width // 2) - (win_width // 2)
+        y = parent_y + (parent_height // 2) - (win_height // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def validate(self):
+        pw1 = self.entry1.get()
+        pw2 = self.entry2.get()
+        if not pw1 or not pw2:
+            self.error_label.config(text="Both fields are required.")
+        elif pw1 != pw2:
+            self.error_label.config(text="Passwords do not match.")
+        else:
+            self.password = pw1
+            self.destroy()
+
+    def cancel(self):
+        self.password = None
+        self.destroy()
+
+
+
 class LockNote:
     def __init__(self, root):
         self.root = root
@@ -180,9 +251,11 @@ class LockNote:
             filetypes=(("Locked Files", "*.locked"), ("All Files", "*.*"))
         )
         if file_path:
-            password = simpledialog.askstring("Set Password", "Set a password for this file:", show="*")
+            dialog = PasswordDialog(self.root)
+            password = dialog.password
             if not password:
-                return
+                return  # user cancelled or mismatch
+
 
             try:
                 content = self.text_area.get(1.0, tk.END).rstrip() + "\n"
