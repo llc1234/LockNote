@@ -11,7 +11,7 @@ extension = ".locked"
 def encrypt_bytes(password, plaintext_bytes):
     salt = get_random_bytes(16)
     iv = get_random_bytes(16)
-    key = PBKDF2(password, salt, dkLen=32, count=10)
+    key = PBKDF2(password, salt, dkLen=32, count=1_000_000)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     ciphertext = cipher.encrypt(pad(plaintext_bytes, AES.block_size))
     return salt + iv + ciphertext
@@ -20,7 +20,7 @@ def decrypt_bytes(password, encrypted_bytes):
     salt = encrypted_bytes[:16]
     iv = encrypted_bytes[16:32]
     ciphertext = encrypted_bytes[32:]
-    key = PBKDF2(password, salt, dkLen=32, count=10)
+    key = PBKDF2(password, salt, dkLen=32, count=1_000_000)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     plaintext_bytes = unpad(cipher.decrypt(ciphertext), AES.block_size)
     return plaintext_bytes
